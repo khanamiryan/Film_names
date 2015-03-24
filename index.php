@@ -8,68 +8,81 @@ header('Last-Modified: ' . gmdate( 'D, d M Y H:i:s') . ' GMT');
 header('Cache-Control: no-store, no-cache, must-revalidate');
 header('Cache-Control: post-check=0, pre-check=0', false);
 header('Pragma: no-cache');
-
-if(isset($_SESSION['ids'])){
-
-            $listOfLastIds = implode(', ',$_SESSION['ids']);
+class Game{
+    public $listOfLastIds,$images,$name,$id;
+    function __construct(){
+        if(!isset($_SESSION['ids'])||!count($_SESSION['ids'])){
+            $_SESSION['ids'] = array();
+            $this->setSessionId('0');
+            $this->listOfLastIds = 0;
         }else{
-            $listOfLastIds = '0';
+            $this->listOfLastIds = implode(', ',$_SESSION['ids']);
         }
-       $q = "SELECT id, name from films where id NOT IN (0, ".$listOfLastIds.") ORDER BY RAND() LIMIT 1";
+    }
+    public function setSessionId($id){
+        $_SESSION['ids'][]= $id;
+        return true;
+    }
+    public function getSessionIds(){
+        return $_SESSION['ids'];
+    }
+    public function resetGame(){
+        unset($_SESSION['ids']);
+    }
+    public function getFilm(){
+        $q = "SELECT id, name from films where id NOT IN (".$this->listOfLastIds.") ORDER BY RAND() LIMIT 1";
         $query  = mysql_query($q);
         if($res = mysql_fetch_assoc($query)){
-            $name = $res['name'];
-            $id = $res['id'];
-
-            $q2= "SELECT id,url from images where film_id=".$res['id']." ORDER BY RAND()";
-            $query2  = mysql_query($q2);
-            if(mysql_num_rows($query2)){
-                while($res2= mysql_fetch_assoc($query2)){
-
-                    $images[] = '/'.$id.'/'.$res2['url'];
+                $this->name = $res['name'];
+                $this->id = $res['id'];
+            if(is_dir($_SERVER['DOCUMENT_ROOT']."/img/".$this->id."/")&&is_file($_SERVER['DOCUMENT_ROOT']."/img/".$this->id."/0.jpg")){//if exists dir
+                for($j=0;$j<=3;$j++){
+                    $this->images[] = '/img/'.$this->id.'/'.$j.".jpg";
                 }
             }else{
-
-            header('Location: /', true, 302);
+                $this->setSessionId($this->id);
+                header('Location: /', true, 302);
                 exit;
             }
-            $_SESSION['ids'][]= $id;
+            $this->setSessionId($this->id);
         }else{
-            $name = 'prcav';
-            $images  ='';
+            $this->name = 'prcav';
+            $this->images  ='';
 
-        }
-function deleteItem($id){
-
-    if($id=intval($id)){
-         $query = "DELETE FROM films WHERE id=".$id." LIMIT 1";
-
-        mysql_query("DELETE FROM images WHERE film_id=".$id."");
-        if($result = mysql_query($query)){
-
-            $dirPath = './img/'.$id.'/';
-            foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dirPath, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $path) {
-                $path->isFile() ? unlink($path->getPathname()) : rmdir($path->getPathname());
-            }
-            if(rmdir($dirPath)){
-                return true;
-            }
         }
 
     }
+    public function deleteItem($id){
+        if($id=intval($id)){
+            if(mysql_query("DELETE FROM images WHERE film_id=".$id."")&&$result = mysql_query("DELETE FROM films WHERE id=".$id." LIMIT 1")){
+                $dirPath = $_SERVER['DOCUMENT_ROOT'].'/img/'.$id.'/';
+                foreach(new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dirPath, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST) as $path) {
+                    $path->isFile() ? unlink($path->getPathname()) : rmdir($path->getPathname());
+                }
+                if(rmdir($dirPath)){
+                    return true;
+                }
+            }
+
+        }
+    }
 }
+
+$game = new Game();
+ $game->getFilm();
 if(isset($_GET['rm'])&&$rmId = intval($_GET['rm'])){
-    if(deleteItem($rmId)){
+    if($game->deleteItem($rmId)){
         print 'ok';
         exit;
     }
 }
-if(@$rmId = intval($_GET['reset'])){
-    unset($_SESSION['ids']);
-    print 'ok';
-    exit;
-
+if(@intval($_GET['reset'])){
+    if($game->resetGame()){
+        print 'ok';
+        exit;
+    }
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -80,8 +93,8 @@ if(@$rmId = intval($_GET['reset'])){
     <title>Game</title>
 
     <!-- Bootstrap -->
-    <link href="css/bootstrap.min.css" rel="stylesheet" />
-    <link href="js/fancybox/jquery.fancybox.css" rel="stylesheet" />
+    <link href="/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="/js/fancybox/jquery.fancybox.css" rel="stylesheet" />
     <style>
         #name{
             font-size: 48px;
@@ -100,20 +113,21 @@ if(@$rmId = intval($_GET['reset'])){
 </head>
 <body >
 
-    <?php if($images){for($i=0;$i<count($images);$i++):?>
+    <?php if($game->images){
+        for($i=0;$i<count($game->images);$i++):?>
         <?php if($i>0):?><div style="display:none;"><?endif?>
-        <a class="fancybox" rel="gal" href="img<?=$images[$i];?>"></a>
+        <a class="fancybox" rel="gal" href="<?=$game->images[$i];?>"></a>
         <?php if($i>0):?></div><?endif?>
-    <?php endfor;}?>
-    <div id="name" style="display: none;"><?=$name?></div>
+        <?php endfor;}?>
+    <div id="name" style="display: none;"><?=$game->name?></div>
 <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-<script src="js/jquery-1.11.0.min.js"></script>
+<script src="/js/jquery-1.11.0.min.js"></script>
 <!-- Include all compiled plugins (below), or include individual files as needed -->
-<script src="js/bootstrap.min.js"></script>
-<script src="js/fancybox/jquery.fancybox.pack.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/fancybox/jquery.fancybox.pack.js"></script>
 <script type="text/javascript">
     $(document).ready(function(){
-        var itemId = <?=isset($id)?$id:0;?>;
+        var itemId = <?=isset($game->id)?$game->id:0;?>;
         console.log(<?=@count($_SESSION['ids'])?>);
         $(".fancybox").fancybox({
                 padding : 0
@@ -124,7 +138,7 @@ if(@$rmId = intval($_GET['reset'])){
             if (e.keyCode == 87) {//w
                 $.fancybox.close();
                 $('#name').addClass('win').show();
-            }else  if (e.keyCode == 68&& (e.ctrlKey|| e.metaKey)) {//d delete
+            }else  if (e.keyCode == 68&& (e.ctrlKey|| e.metaKey)) {//ctrl+d delete
                 $.get('?rm='+itemId,function(data){
                     if(data=='ok'){
                         window.location.href="/";
@@ -142,6 +156,21 @@ if(@$rmId = intval($_GET['reset'])){
             }
         });
 
+
+
+
+
+            //$('.newWindow').click(function (event){
+
+                var url = '';
+                var windowName = "popUp";//$(this).attr("name");
+                var windowSize = "width=200,height=200";
+
+                var w = window.open(url, windowName, windowSize);
+                console.log($(w.document.body).html($('#name').html()));
+
+
+            //});
     });
 
 </script>

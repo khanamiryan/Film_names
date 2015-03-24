@@ -1,0 +1,33 @@
+{
+  "engines": {
+    "node": ">= 0.10.0"
+  },
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-concat": "^0.5.1",
+    "grunt-contrib-jshint": "^0.11.1",
+    "grunt-contrib-nodeunit": "^0.4.1",
+    "grunt-contrib-uglify": "^0.8.0",
+    "grunt-contrib-watch": "^0.6.1"
+  },
+  "name": "film_names.am",
+  "description": "Game with film names",
+  "version": "1.0.0",
+  "main": "Gruntfile.js",
+  "dependencies": {
+    "npm": "^2.7.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/khanamiryan/Film_names.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/khanamiryan/Film_names/issues"
+  },
+  "homepage": "https://github.com/khanamiryan/Film_names"
+}
