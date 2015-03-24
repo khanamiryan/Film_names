@@ -1,0 +1,16 @@
+{
+  "name": "film_names.am",
+  "version": "1",
+  "homepage": "https://github.com/khanamiryan/Film_names",
+  "authors": [
+    "khanamiryan <a.khanamiryan@gmail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
